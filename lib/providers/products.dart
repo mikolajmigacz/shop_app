@@ -39,7 +39,14 @@ class Products with ChangeNotifier {
   ];
 
   List<Product> get items {
+    // if (_showFavoritesOnly) {
+    //   return _items.where((prodItem) => prodItem.isFavorite).toList();
+    // }
     return [..._items];
+  }
+
+  List<Product> get favoriteItems {
+    return _items.where((prodItem) => prodItem.isFavorite).toList();
   }
 
   void addProducts() {
@@ -47,7 +54,17 @@ class Products with ChangeNotifier {
     notifyListeners();
   }
 
-  Product findById(String id){
+  Product findById(String id) {
     return _items.firstWhere((prod) => prod.id == id);
   }
+
+  // void showFavoritesOnly() {
+  //   _showFavoritesOnly = true;
+  //   notifyListeners();
+  // }
+
+  // void ShowAll() {
+  //   _showFavoritesOnly = false;
+  //   notifyListeners();
+  // }
 }
