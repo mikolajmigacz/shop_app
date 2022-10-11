@@ -43,6 +43,10 @@ class Products with ChangeNotifier {
     //       'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Cast-Iron-Pan.jpg/1024px-Cast-Iron-Pan.jpg',
     // ),
   ];
+  final String authToken;
+  final String userId;
+
+  Products(this.authToken, this.userId, this._items);
 
   List<Product> get items {
     // if (_showFavoritesOnly) {
@@ -55,12 +59,32 @@ class Products with ChangeNotifier {
     return _items.where((prodItem) => prodItem.isFavorite).toList();
   }
 
-  Future<void> fetchAndSetProducts() async {
-    final url = Uri.https(PrivateData.db_url, '/products.json');
+  Future<void> fetchAndSetProducts([bool filterByUser = false]) async {
+    var _params;
+    if (filterByUser) {
+      _params = <String, String>{
+        'auth': authToken,
+        'orderBy': json.encode("creatorId"),
+        'equalTo': json.encode(userId),
+      };
+    }
+    if (filterByUser == false) {
+      _params = <String, String>{
+        'auth': authToken,
+      };
+    }
+    var url = Uri.https(PrivateData.db_url, '/products.json', _params);
 
     try {
       final response = await http.get(url);
       final extracedData = json.decode(response.body) as Map<String, dynamic>;
+      if (extracedData == null) {
+        return;
+      }
+      url = Uri.https(PrivateData.db_url, '/userFavorites/$userId.json',
+          {'auth': '$authToken'});
+      final favoriteResponse = await http.get(url);
+      final favoriteData = json.decode(favoriteResponse.body);
       final List<Product> loadedProdust = [];
       extracedData.forEach((prodId, prodData) {
         loadedProdust.add(
@@ -70,7 +94,8 @@ class Products with ChangeNotifier {
             description: prodData['description'],
             price: prodData['price'],
             imageUrl: prodData['imageUrl'],
-            isFavorite: prodData['isFavorite'],
+            isFavorite:
+                favoriteData == null ? false : favoriteData[prodId] ?? false,
           ),
         );
       });
@@ -82,7 +107,8 @@ class Products with ChangeNotifier {
   }
 
   Future<void> addProduct(Product product) async {
-    final url = Uri.https(PrivateData.db_url, '/products.json');
+    final url =
+        Uri.https(PrivateData.db_url, '/products.json', {'auth': '$authToken'});
     try {
       final response = await http.post(
         url,
@@ -91,7 +117,7 @@ class Products with ChangeNotifier {
           'description': product.description,
           'imageUrl': product.imageUrl,
           'price': product.price,
-          'isFavorite': product.isFavorite,
+          'creatorId': userId
         }),
       );
 
@@ -117,7 +143,8 @@ class Products with ChangeNotifier {
   Future<void> updateProduct(String id, Product newProduct) async {
     final prodIndex = _items.indexWhere((prod) => prod.id == id);
     if (prodIndex >= 0) {
-      final url = Uri.https(PrivateData.db_url, '/products/$id.json');
+      final url = Uri.https(
+          PrivateData.db_url, '/products/$id.json', {'auth': '$authToken'});
       await http.patch(url,
           body: json.encode({
             'title': newProduct.title,
@@ -133,7 +160,8 @@ class Products with ChangeNotifier {
   }
 
   Future<void> deleteProduct(String id) async {
-    final url = Uri.https(PrivateData.db_url, '/products/$id.json');
+    final url = Uri.https(
+        PrivateData.db_url, '/products/$id.json', {'auth': '$authToken'});
     final existingProductindex = _items.indexWhere((prod) => prod.id == id);
     var existingProduct = _items[existingProductindex];
     final response = await http.delete(url);
