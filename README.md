@@ -9,7 +9,7 @@ Technologies used to develop app:
 I used JWT for authorization.
 
 ## Login / Sign up
-![login](./shop_app_sc/login.PNG)
+![login](./shop_app_sc/login.png)
 
 ## Product Overview and Detail
 ![product](./shop_app_sc/product_detail.png)
