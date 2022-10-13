@@ -1,4 +1,4 @@
-# Meals App
+# Shop App
 
 An shop application with products that we can add, edit (only that we create), order, filter, add to favorites.
 
